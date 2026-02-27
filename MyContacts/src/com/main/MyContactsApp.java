@@ -4,64 +4,98 @@ package com.main;
  * This main class coordinates the user registration process, taking user input,
  * validating it, and creating the appropriate user objects.
  * @author Developer
- * @version 1.0
+ * @version 2.0
  */
 
-
+import java.util.Optional;
 import java.util.Scanner;
+import com.user.auth.Authentication;
+import com.user.auth.BasicAuth;
+import com.user.encryption.PasswordHashing;
 import com.user.exceptions.InvalidUserDataException;
 import com.user.model.FreeUser;
 import com.user.model.PremiumUser;
 import com.user.model.User;
+import com.user.repository.UserRepository;
+import com.user.session.SessionManager;
 import com.user.validation.Validator;
 
-// main class, start of execution
 public class MyContactsApp {
 
     public static void main(String[] args) {
 
         Scanner sc = new Scanner(System.in);
+        UserRepository repository = new UserRepository();
+        Authentication auth = new BasicAuth(repository);
+        SessionManager session = new SessionManager();
 
-        try {
-        	// get registration details from user
-            System.out.print("Enter first name: ");
-            String firstName = sc.nextLine();
+        while (true) {
 
-            System.out.print("Enter last name: ");
-            String lastName = sc.nextLine();
-            
-            System.out.print("Enter email: ");
-            String email = sc.nextLine();
+            System.out.println("\n1. Register");
+            System.out.println("2. Login");
+            System.out.println("3. Exit");
+            System.out.print("Choose option: ");
+            int choice = Integer.parseInt(sc.nextLine());
 
-            System.out.print("Enter password: ");
-            String password = sc.nextLine();
+            try {
+                if (choice == 1) {
+                    System.out.print("Enter first name: ");
+                    String firstName = sc.nextLine();
 
-            System.out.print("Enter user type (free/premium): ");
-            String typeInput = sc.nextLine().toLowerCase();
-            
-            // validate all fields
-            Validator.validate(email,password,firstName,lastName);
-            User user;
-            
-            // check if user type is free or premium
-            if (typeInput.equals("free")) {
-                user = new FreeUser(email,password,firstName,lastName);
-            } else if (typeInput.equals("premium")) {
-                user = new PremiumUser(email,password,firstName,lastName);
-            } else {
-                throw new InvalidUserDataException("Invalid user type.");
-                
+                    System.out.print("Enter last name: ");
+                    String lastName = sc.nextLine();
+
+                    System.out.print("Enter email: ");
+                    String email = sc.nextLine();
+
+                    System.out.print("Enter password: ");
+                    String password = sc.nextLine();
+
+                    System.out.print("Enter user type (free/premium): ");
+                    String typeInput = sc.nextLine().toLowerCase();
+
+                    Validator.validate(email, password, firstName, lastName);
+
+                    String hashedPassword = PasswordHashing.hashPassword(password);
+
+                    User user;
+
+                    if (typeInput.equals("free")) {
+                        user = new FreeUser(email, hashedPassword, firstName, lastName);
+                    } else if (typeInput.equals("premium")) {
+                        user = new PremiumUser(email, hashedPassword, firstName, lastName);
+                    } else {
+                        throw new InvalidUserDataException("Invalid user type.");
+                    }
+
+                    repository.save(user);
+
+                    System.out.println("Registration Successful!");
+
+                } else if (choice == 2) {
+                    System.out.print("Enter email: ");
+                    String email = sc.nextLine();
+
+                    System.out.print("Enter password: ");
+                    String password = sc.nextLine();
+
+                    Optional<User> loggedInUser = auth.login(email, password);
+
+                    if (loggedInUser.isPresent()) {
+                        session.login(loggedInUser.get());
+                        System.out.println("Login Successful!");
+                        System.out.println("Welcome " + session.getCurrentUser().getFirstName());
+                    } else {
+                        System.out.println("Invalid credentials.");
+                    }
+
+                } else if (choice == 3) {
+                    System.out.println("Exiting...");
+                    break;
+                }
+            } catch (InvalidUserDataException e) {
+                System.out.println("Error: " + e.getMessage());
             }
-            
-            // display registration details
-            System.out.println("\nRegistration Successful!");
-            System.out.println("Name: "+user.getFirstName()+" "+user.getLastName());
-            System.out.println("Email: "+user.getEmail());
-            System.out.println("User Type: "+user.getUserType());
-
-        } catch (InvalidUserDataException e) {
-            System.out.println("Registration Failed! "+e.getMessage());
         }
-        sc.close();
     }
 }
