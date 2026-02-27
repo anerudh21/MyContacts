@@ -20,4 +20,8 @@ public class ContactRepository {
     public boolean isEmpty() {
         return contactStore.isEmpty();
     }
+    
+    public void update(Contact contact) {
+    	contactStore.put(contact.getId(), contact);
+    }
 }

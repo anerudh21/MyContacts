@@ -21,6 +21,16 @@ public abstract class Contact {
         this.phoneNumbers = new ArrayList<>();
         this.emailAddresses = new ArrayList<>();
     }
+    
+    protected Contact(Contact other) {
+    	this.id = other.id;
+        this.createdAt = other.createdAt;
+        this.name = other.name;
+
+        // Deep copy
+        this.phoneNumbers = new ArrayList<>(other.phoneNumbers);
+        this.emailAddresses = new ArrayList<>(other.emailAddresses);
+    }
 
     public UUID getId() {
         return id;
@@ -35,11 +45,11 @@ public abstract class Contact {
     }
 
     public List<PhoneNumber> getPhoneNumbers() {
-        return phoneNumbers;
+        return new ArrayList<>(phoneNumbers);
     }
 
     public List<EmailAddress> getEmailAddresses() {
-        return emailAddresses;
+        return new ArrayList<>(emailAddresses);
     }
 
     public void addPhoneNumber(PhoneNumber phoneNumber) {
@@ -48,6 +58,23 @@ public abstract class Contact {
 
     public void addEmailAddress(EmailAddress emailAddress) {
         emailAddresses.add(emailAddress);
+    }
+    
+    public void setName(String name) {
+        if (name == null || name.isBlank()) {
+            throw new IllegalArgumentException("Name cannot be empty");
+        }
+        this.name = name;
+    }
+    
+    public void setPhoneNumbers(List<PhoneNumber> phones) {
+        this.phoneNumbers.clear();
+        this.phoneNumbers.addAll(phones);
+    }
+
+    public void setEmailAddresses(List<EmailAddress> emails) {
+        this.emailAddresses.clear();
+        this.emailAddresses.addAll(emails);
     }
 
     public abstract String getContactType();
