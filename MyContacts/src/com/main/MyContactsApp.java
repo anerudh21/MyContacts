@@ -10,10 +10,11 @@ package com.main;
  * The Main class handles console input, validation, object creation, and displays the registration result.
  * 
  * @author Developer
- * @version 4.0
+ * @version 5.0
  */
 import java.util.Optional;
 import java.util.Scanner;
+import java.util.List;
 import com.user.auth.Authentication;
 import com.user.auth.BasicAuth;
 import com.user.encryption.PasswordHashing;
@@ -36,7 +37,7 @@ public class MyContactsApp {
         SessionManager session = new SessionManager();
 
         while (true) {
-
+        	// when user is not logged in
             if (!session.isLoggedIn()) {
 
                 System.out.println("\n1. Register");
@@ -65,7 +66,6 @@ public class MyContactsApp {
                         String typeInput = sc.nextLine().toLowerCase();
 
                         Validator.validate(email, password, firstName, lastName);
-
                         String hashedPassword = PasswordHashing.hashPassword(password);
 
                         User user;
@@ -108,18 +108,23 @@ public class MyContactsApp {
                     System.out.println("Error: " + e.getMessage());
                 }
 
+            // ==========================
+            // LOGGED IN MENU
+            // ==========================
             } else {
 
                 System.out.println("\n1. Update Name");
                 System.out.println("2. Change Password");
                 System.out.println("3. Change Preferences");
                 System.out.println("4. Add Contact");
-                System.out.println("5. Logout");
+                System.out.println("5. View Contact Details");
+                System.out.println("6. Logout");
                 System.out.print("Choose option: ");
                 int choice = Integer.parseInt(sc.nextLine());
 
                 try {
 
+                    // 1️⃣ Update Name
                     if (choice == 1) {
 
                         System.out.print("Enter new first name: ");
@@ -131,6 +136,7 @@ public class MyContactsApp {
                         session.getCurrentUser().updateName(firstName, lastName);
                         System.out.println("Name updated successfully!");
 
+                    // 2️⃣ Change Password
                     } else if (choice == 2) {
 
                         System.out.print("Enter old password: ");
@@ -142,6 +148,7 @@ public class MyContactsApp {
                         session.getCurrentUser().changePassword(oldPassword, newPassword);
                         System.out.println("Password changed successfully!");
 
+                    // 3️⃣ Change Preferences
                     } else if (choice == 3) {
 
                         System.out.print("Enable Dark Mode? (true/false): ");
@@ -155,49 +162,104 @@ public class MyContactsApp {
                                .updatePreferences(darkMode, emailNotifications);
 
                         System.out.println("Preferences updated successfully!");
-                    
-                	} else if (choice == 4) {
 
-                	    System.out.print("Enter contact type (person/organization): ");
-                	    String type = sc.nextLine().toLowerCase();
+                    // 4️⃣ Add Contact
+                    } else if (choice == 4) {
 
-                	    System.out.print("Enter contact name: ");
-                	    String name = sc.nextLine();
+                        System.out.print("Enter contact type (person/organization): ");
+                        String type = sc.nextLine().toLowerCase();
 
-                	    Contact contact;
+                        System.out.print("Enter contact name: ");
+                        String name = sc.nextLine();
 
-                	    if (type.equals("person")) {
-                	        contact = new Person(name);
-                	    } else if (type.equals("organization")) {
-                	        contact = new Organization(name);
-                	    } else {
-                	        System.out.println("Invalid contact type.");
-                	        continue;
-                	    }
+                        Contact contact;
 
-                	    System.out.print("How many phone numbers? ");
-                	    int phoneCount = Integer.parseInt(sc.nextLine());
+                        if (type.equals("person")) {
+                            contact = new Person(name);
+                        } else if (type.equals("organization")) {
+                            contact = new Organization(name);
+                        } else {
+                            System.out.println("Invalid contact type.");
+                            continue;
+                        }
 
-                	    for (int i = 0; i < phoneCount; i++) {
-                	        System.out.print("Enter phone number: ");
-                	        contact.addPhoneNumber(new PhoneNumber(sc.nextLine()));
-                	    }
+                        System.out.print("How many phone numbers? ");
+                        int phoneCount = Integer.parseInt(sc.nextLine());
 
-                	    System.out.print("How many email addresses? ");
-                	    int emailCount = Integer.parseInt(sc.nextLine());
+                        for (int i = 0; i < phoneCount; i++) {
+                            System.out.print("Enter phone number: ");
+                            contact.addPhoneNumber(new PhoneNumber(sc.nextLine()));
+                        }
 
-                	    for (int i = 0; i < emailCount; i++) {
-                	        System.out.print("Enter email address: ");
-                	        contact.addEmailAddress(new EmailAddress(sc.nextLine()));
-                	    }
+                        System.out.print("How many email addresses? ");
+                        int emailCount = Integer.parseInt(sc.nextLine());
 
-                	    session.getCurrentUser()
-                	           .getContactRepository()
-                	           .addContact(contact);
+                        for (int i = 0; i < emailCount; i++) {
+                            System.out.print("Enter email address: ");
+                            contact.addEmailAddress(new EmailAddress(sc.nextLine()));
+                        }
 
-                	    System.out.println("Contact added successfully!");
-                    
+                        session.getCurrentUser()
+                               .getContactRepository()
+                               .save(contact);
+
+                        System.out.println("Contact added successfully!");
+
+                    // 5️⃣ View Contact Details (UPDATED — NO UUID INPUT)
                     } else if (choice == 5) {
+
+                        List<Contact> contacts =
+                                session.getCurrentUser()
+                                       .getContactRepository()
+                                       .findAll();
+
+                        if (contacts.isEmpty()) {
+                            System.out.println("No contacts available.");
+                            continue;
+                        }
+
+                        System.out.println("\n--- Your Contacts ---");
+
+                        for (int i = 0; i < contacts.size(); i++) {
+                            System.out.println((i + 1) + ". "
+                                    + contacts.get(i).getName()
+                                    + " (" + contacts.get(i).getContactType() + ")");
+                        }
+
+                        System.out.print("Select contact number: ");
+                        int selection = Integer.parseInt(sc.nextLine());
+
+                        if (selection < 1 || selection > contacts.size()) {
+                            System.out.println("Invalid selection.");
+                            continue;
+                        }
+
+                        Contact c = contacts.get(selection - 1);
+
+                        List<String> phones = c.getPhoneNumbers()
+                                .stream()
+                                .map(PhoneNumber::getNumber)
+                                .toList();
+
+                        List<String> emails = c.getEmailAddresses()
+                                .stream()
+                                .map(EmailAddress::getEmail)
+                                .toList();
+
+                        ContactView view = new ContactView(
+                                c.getId(),
+                                c.getContactType(),
+                                c.getName(),
+                                c.getCreatedAt(),
+                                phones,
+                                emails
+                        );
+
+                        System.out.println("\nContact Details:");
+                        System.out.println(view);
+
+                    // 6️⃣ Logout
+                    } else if (choice == 6) {
 
                         session.logout();
                         System.out.println("Logged out successfully.");

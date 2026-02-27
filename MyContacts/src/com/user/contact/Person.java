@@ -10,4 +10,4 @@ public class Person extends Contact {
     public String getContactType() {
         return "Person";
     }
-} 
+}

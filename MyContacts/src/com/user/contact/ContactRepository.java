@@ -1,17 +1,23 @@
 package com.user.contact;
 
-import java.util.ArrayList;
-import java.util.List;
-
+import java.util.*;
 public class ContactRepository {
 
-    private final List<Contact> contacts = new ArrayList<>();
+    private final Map<UUID, Contact> contactStore = new HashMap<>();
 
-    public void addContact(Contact contact) {
-        contacts.add(contact);
+    public void save(Contact contact) {
+        contactStore.put(contact.getId(), contact);
     }
 
-    public List<Contact> getAllContacts() {
-        return contacts;
+    public List<Contact> findAll() {
+        return new ArrayList<>(contactStore.values());
+    }
+
+    public Optional<Contact> findById(UUID id) {
+        return Optional.ofNullable(contactStore.get(id));
+    }
+    
+    public boolean isEmpty() {
+        return contactStore.isEmpty();
     }
 }

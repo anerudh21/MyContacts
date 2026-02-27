@@ -1,44 +1,37 @@
 package com.user.contact;
 
-
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.ArrayList;
 
+// contact class for blueprints of a contact
 public abstract class Contact {
 
     private final UUID id;
     private final LocalDateTime createdAt;
-
     private String name;
-    private final List<PhoneNumber> phoneNumbers = new ArrayList<>();
-    private final List<EmailAddress> emailAddresses = new ArrayList<>();
+    private final List<PhoneNumber> phoneNumbers;
+    private final List<EmailAddress> emailAddresses;
 
-    protected Contact(String name) {
+    public Contact(String name) {
         this.id = UUID.randomUUID();
         this.createdAt = LocalDateTime.now();
         this.name = name;
+        this.phoneNumbers = new ArrayList<>();
+        this.emailAddresses = new ArrayList<>();
     }
 
     public UUID getId() {
         return id;
     }
 
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
     public String getName() {
         return name;
     }
 
-    public void addPhoneNumber(PhoneNumber phone) {
-        phoneNumbers.add(phone);
-    }
-
-    public void addEmailAddress(EmailAddress email) {
-        emailAddresses.add(email);
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
     }
 
     public List<PhoneNumber> getPhoneNumbers() {
@@ -49,5 +42,34 @@ public abstract class Contact {
         return emailAddresses;
     }
 
+    public void addPhoneNumber(PhoneNumber phoneNumber) {
+        phoneNumbers.add(phoneNumber);
+    }
+
+    public void addEmailAddress(EmailAddress emailAddress) {
+        emailAddresses.add(emailAddress);
+    }
+
     public abstract String getContactType();
+
+    @Override
+    public String toString() {
+        return """
+                ==============================
+                Contact Details
+                ==============================
+                Type: %s
+                Name: %s
+                Phone Numbers: %s
+                Email Addresses: %s
+                Created At: %s
+                ==============================
+                """.formatted(
+                getContactType(),
+                name,
+                phoneNumbers,
+                emailAddresses,
+                createdAt
+        );
+    }
 }
