@@ -12,12 +12,14 @@ package com.user.model;
 //base abstract class
 import com.user.encryption.PasswordHashing;
 import com.user.exceptions.InvalidUserDataException;
+import com.user.contact.ContactRepository;
 
 public abstract class User {
 
  public enum UserType { free, premium }
  
  private Preferences preferences = new Preferences();
+ private ContactRepository contactRepository = new ContactRepository();
  
  private final String email;
  private String password;
@@ -49,6 +51,10 @@ public abstract class User {
  
  public Preferences getPreferences() {
      return preferences;
+ }
+ 
+ public ContactRepository getContactRepository() {
+     return contactRepository;
  }
 
  public void updateName(String firstName, String lastName) throws InvalidUserDataException {
