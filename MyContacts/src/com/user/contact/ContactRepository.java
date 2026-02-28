@@ -1,6 +1,7 @@
 package com.user.contact;
 
 import java.util.*;
+
 public class ContactRepository {
 
     private final Map<UUID, Contact> contactStore = new HashMap<>();
@@ -22,6 +23,13 @@ public class ContactRepository {
     }
     
     public void update(Contact contact) {
-    	contactStore.put(contact.getId(), contact);
+        contactStore.put(contact.getId(), contact);
+    }
+
+    public void delete(UUID id) {
+        if (!contactStore.containsKey(id)) {
+            throw new NoSuchElementException("Contact Not Found!");
+        }
+        contactStore.remove(id);
     }
 }
