@@ -10,11 +10,13 @@ package com.main;
  * The Main class handles console input, validation, object creation, and displays the registration result.
  * 
  * @author Developer
- * @version 5.0
+ * @version 7.0
  */
 import java.util.Optional;
 import java.util.Scanner;
 import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.ArrayList;
 import com.user.auth.Authentication;
 import com.user.auth.BasicAuth;
 import com.user.encryption.PasswordHashing;
@@ -108,9 +110,7 @@ public class MyContactsApp {
                     System.out.println("Error: " + e.getMessage());
                 }
 
-            // ==========================
-            // LOGGED IN MENU
-            // ==========================
+            // when user is logged in
             } else {
 
                 System.out.println("\n1. Update Name");
@@ -118,13 +118,15 @@ public class MyContactsApp {
                 System.out.println("3. Change Preferences");
                 System.out.println("4. Add Contact");
                 System.out.println("5. View Contact Details");
-                System.out.println("6. Logout");
+                System.out.println("6. Edit Contact");
+                System.out.println("7. Delete Contact");
+                System.out.println("8. Logout");
                 System.out.print("Choose option: ");
                 int choice = Integer.parseInt(sc.nextLine());
 
                 try {
 
-                    // 1️⃣ Update Name
+                    // Update Name option
                     if (choice == 1) {
 
                         System.out.print("Enter new first name: ");
@@ -136,7 +138,7 @@ public class MyContactsApp {
                         session.getCurrentUser().updateName(firstName, lastName);
                         System.out.println("Name updated successfully!");
 
-                    // 2️⃣ Change Password
+                    // Change Password option
                     } else if (choice == 2) {
 
                         System.out.print("Enter old password: ");
@@ -148,7 +150,7 @@ public class MyContactsApp {
                         session.getCurrentUser().changePassword(oldPassword, newPassword);
                         System.out.println("Password changed successfully!");
 
-                    // 3️⃣ Change Preferences
+                    // Change Preferences option
                     } else if (choice == 3) {
 
                         System.out.print("Enable Dark Mode? (true/false): ");
@@ -163,7 +165,7 @@ public class MyContactsApp {
 
                         System.out.println("Preferences updated successfully!");
 
-                    // 4️⃣ Add Contact
+                    // Add Contact option
                     } else if (choice == 4) {
 
                         System.out.print("Enter contact type (person/organization): ");
@@ -205,7 +207,7 @@ public class MyContactsApp {
 
                         System.out.println("Contact added successfully!");
 
-                    // 5️⃣ View Contact Details (UPDATED — NO UUID INPUT)
+                    // View Contact Details option
                     } else if (choice == 5) {
 
                         List<Contact> contacts =
@@ -257,9 +259,141 @@ public class MyContactsApp {
 
                         System.out.println("\nContact Details:");
                         System.out.println(view);
-
-                    // 6️⃣ Logout
+                    
+                    // edit contact option
                     } else if (choice == 6) {
+
+                        ContactRepository repo = session.getCurrentUser().getContactRepository();
+                        List<Contact> contacts = repo.findAll();
+
+                        if (contacts.isEmpty()) {
+                            System.out.println("No contacts available to edit.");
+                            return;
+                        }
+
+                        System.out.println("\n--- Your Contacts ---");
+                        for (int i = 0; i < contacts.size(); i++) {
+                            Contact c = contacts.get(i);
+                            System.out.println((i + 1) + ". " + c.getName() + " (" + c.getContactType() + ")");
+                        }
+
+                        System.out.print("Select contact number to edit: ");
+                        int index = Integer.parseInt(sc.nextLine());
+
+                        if (index < 1 || index > contacts.size()) {
+                            System.out.println("Invalid selection.");
+                            return;
+                        }
+
+                        Contact existing = contacts.get(index - 1);
+                        Contact edited;
+
+                        // Deep copy using copy constructor
+                        if (existing instanceof Person p) {
+                            edited = new Person(p);
+                        } else if (existing instanceof Organization o) {
+                            edited = new Organization(o);
+                        } else {
+                            System.out.println("Unknown contact type.");
+                            return;
+                        }
+
+                        System.out.println("\nWhat would you like to edit?");
+                        System.out.println("1. Name");
+                        System.out.println("2. Phone Numbers");
+                        System.out.println("3. Email Addresses");
+
+                        int editChoice = Integer.parseInt(sc.nextLine());
+
+                        switch (editChoice) {
+
+                            case 1 -> {
+                                System.out.print("Enter new name: ");
+                                String newName = sc.nextLine();
+                                edited.setName(newName);
+                            }
+
+                            case 2 -> {
+                                System.out.print("How many phone numbers? ");
+                                int phoneCount = Integer.parseInt(sc.nextLine());
+
+                                List<PhoneNumber> newPhones = new ArrayList<>();
+
+                                for (int i = 0; i < phoneCount; i++) {
+                                    System.out.print("Enter phone number: ");
+                                    newPhones.add(new PhoneNumber(sc.nextLine()));
+                                }
+
+                                edited.setPhoneNumbers(newPhones);
+                            }
+
+                            case 3 -> {
+                                System.out.print("How many email addresses? ");
+                                int emailCount = Integer.parseInt(sc.nextLine());
+
+                                List<EmailAddress> newEmails = new ArrayList<>();
+
+                                for (int i = 0; i < emailCount; i++) {
+                                    System.out.print("Enter email address: ");
+                                    newEmails.add(new EmailAddress(sc.nextLine()));
+                                }
+
+                                edited.setEmailAddresses(newEmails);
+                            }
+
+                            default -> {
+                                System.out.println("Invalid option.");
+                                return;
+                            }
+                        }
+
+                        repo.update(edited);
+                        System.out.println("Contact updated successfully!");
+                    
+                    // delete contact option
+                    } else if (choice == 7) {
+                    	ContactRepository repo = session.getCurrentUser().getContactRepository();
+                        List<Contact> contacts = repo.findAll();
+
+                        if (contacts.isEmpty()) {
+                            System.out.println("No contacts available to delete.");
+                            return;
+                        }
+
+                        System.out.println("\n--- Your Contacts ---");
+                        for (int i = 0; i < contacts.size(); i++) {
+                            Contact c = contacts.get(i);
+                            System.out.println((i + 1) + ". " + c.getName() + " (" + c.getContactType() + ")");
+                        }
+
+                        System.out.print("Select contact number to delete: ");
+                        int index = Integer.parseInt(sc.nextLine());
+
+                        if (index < 1 || index > contacts.size()) {
+                            System.out.println("Invalid selection.");
+                            return;
+                        }
+
+                        Contact selected = contacts.get(index - 1);
+
+                        System.out.print("Are you sure you want to delete '" 
+                                + selected.getName() + "'? (yes/no): ");
+
+                        String confirmation = sc.nextLine();
+
+                        if (confirmation.equalsIgnoreCase("yes")) {
+                            try {
+                                repo.delete(selected.getId());
+                                System.out.println("Contact deleted successfully!");
+                            } catch (NoSuchElementException e) {
+                                System.out.println("Error: " + e.getMessage());
+                            }
+                        } else {
+                            System.out.println("Deletion cancelled.");
+                        }
+                        
+                    // logout option
+                    } else if (choice == 8) {
 
                         session.logout();
                         System.out.println("Logged out successfully.");
@@ -267,7 +401,7 @@ public class MyContactsApp {
 
                 } catch (InvalidUserDataException e) {
                     System.out.println("Error: " + e.getMessage());
-                }
+                } 
             }
         }
     }
