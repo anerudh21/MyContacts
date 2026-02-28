@@ -10,25 +10,23 @@ package com.main;
  * The Main class handles console input, validation, object creation, and displays the registration result.
  * 
  * @author Developer
-<<<<<<< HEAD
- * @version 6.0
- */
-import java.util.*;
-import com.user.auth.*;
-=======
- * @version 7.0
- */
+ * @version 8.0
+ */	
 import java.util.Optional;
 import java.util.Scanner;
+import java.util.UUID;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.ArrayList;
+import java.util.Arrays;
+
 import com.user.auth.Authentication;
 import com.user.auth.BasicAuth;
->>>>>>> feature/UC7-DeleteContact
 import com.user.encryption.PasswordHashing;
 import com.user.exceptions.InvalidUserDataException;
-import com.user.model.*;
+import com.user.model.FreeUser;
+import com.user.model.PremiumUser;
+import com.user.model.User;
 import com.user.repository.UserRepository;
 import com.user.session.SessionManager;
 import com.user.validation.Validator;
@@ -124,12 +122,9 @@ public class MyContactsApp {
                 System.out.println("4. Add Contact");
                 System.out.println("5. View Contact Details");
                 System.out.println("6. Edit Contact");
-<<<<<<< HEAD
-                System.out.println("7. Logout");
-=======
                 System.out.println("7. Delete Contact");
-                System.out.println("8. Logout");
->>>>>>> feature/UC7-DeleteContact
+                System.out.println("8. Bulk Operations");
+                System.out.println("9. Logout");
                 System.out.print("Choose option: ");
                 int choice = Integer.parseInt(sc.nextLine());
 
@@ -358,11 +353,6 @@ public class MyContactsApp {
 
                         repo.update(edited);
                         System.out.println("Contact updated successfully!");
-<<<<<<< HEAD
-                        
-                    // logout option
-                    } else if (choice == 7) {
-=======
                     
                     // delete contact option
                     } else if (choice == 7) {
@@ -405,10 +395,70 @@ public class MyContactsApp {
                         } else {
                             System.out.println("Deletion cancelled.");
                         }
-                        
-                    // logout option
+                    
+                    // bulk operations option
                     } else if (choice == 8) {
->>>>>>> feature/UC7-DeleteContact
+                        ContactRepository repo = session.getCurrentUser().getContactRepository();
+                        List<Contact> contacts = repo.findAll();
+
+                        if (contacts.isEmpty()) {
+                            System.out.println("No contacts available.");
+                            return;
+                        }
+
+                        System.out.println("\n--- Your Contacts ---");
+                        for (int i = 0; i < contacts.size(); i++) {
+                            Contact c = contacts.get(i);
+                            System.out.println((i + 1) + ". " + c.getName() + " (" + c.getContactType() + ")");
+                        }
+
+                        System.out.println("\nBulk Options:");
+                        System.out.println("1. Delete Multiple Contacts");
+                        System.out.println("2. Delete All Persons");
+                        System.out.println("3. Delete All Organizations");
+
+                        int bulkChoice = Integer.parseInt(sc.nextLine());
+
+                        switch (bulkChoice) {
+
+                            case 1 -> {
+                                System.out.print("Enter contact numbers separated by comma (e.g. 1,3,4): ");
+                                String input = sc.nextLine();
+
+                                List<UUID> idsToDelete = Arrays.stream(input.split(","))
+                                        .map(String::trim)
+                                        .map(Integer::parseInt)
+                                        .map(i -> contacts.get(i - 1).getId())
+                                        .toList();
+
+                                repo.deleteAll(idsToDelete);
+                                System.out.println("Selected contacts deleted.");
+                            }
+
+                            case 2 -> {
+                                List<UUID> ids = repo.filter(c -> c.getContactType().equals("Person"))
+                                        .stream()
+                                        .map(Contact::getId)
+                                        .toList();
+
+                                repo.deleteAll(ids);
+                                System.out.println("All Person contacts deleted.");
+                            }
+
+                            case 3 -> {
+                                List<UUID> ids = repo.filter(c -> c.getContactType().equals("Organization"))
+                                        .stream()
+                                        .map(Contact::getId)
+                                        .toList();
+
+                                repo.deleteAll(ids);
+                                System.out.println("All Organization contacts deleted.");
+                            }
+
+                            default -> System.out.println("Invalid bulk option.");
+                        }
+                    // logout option
+                    } else if (choice == 9) {
 
                         session.logout();
                         System.out.println("Logged out successfully.");
