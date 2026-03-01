@@ -120,7 +120,8 @@ public class MyContactsApp {
 				System.out.println("7. Delete Contact");
 				System.out.println("8. Bulk Operations");
 				System.out.println("9. Search Contacts");
-				System.out.println("10. Logout");
+				System.out.println("10. Basic Filtering (Tags/Date/Frequency)");
+				System.out.println("11. Logout");
 				System.out.print("Choose option: ");
 				int choice = Integer.parseInt(sc.nextLine());
 
@@ -483,7 +484,43 @@ public class MyContactsApp {
 							results.forEach(c -> System.out.println("- " + c.getName() + " [" + c.getContactType() + "]"));
 						}
 
-					} else if (choice == 10) {
+					} if (choice == 10) {
+						ContactRepository repo = session.getCurrentUser().getContactRepository();
+						ContactFilterService filterService = new ContactFilterService();
+						List<Contact> allContacts = repo.findAll();
+
+						if (allContacts.isEmpty()) {
+							System.out.println("No contacts to filter.");
+						} else {
+							System.out.println("\n--- Filtering Options ---");
+							System.out.println("1. Filter by Tag");
+							System.out.println("2. Sort by Date Added (Newest)");
+							System.out.println("3. Sort by Frequently Contacted");
+							System.out.print("Selection: ");
+							int filterChoice = Integer.parseInt(sc.nextLine());
+
+							List<Contact> result = new ArrayList<>();
+
+							switch (filterChoice) {
+							case 1 -> {
+								System.out.print("Enter tag: ");
+								result = filterService.filterByTag(allContacts, sc.nextLine());
+							}
+							case 2 -> result = filterService.sortByDateAdded(allContacts);
+							case 3 -> result = filterService.sortByFrequency(allContacts);
+							default -> System.out.println("Invalid option.");
+							}
+
+							if (result.isEmpty()) {
+								System.out.println("No results found.");
+							} else {
+								System.out.println("\n--- Filtered Results ---");
+								for (Contact c : result) {
+									System.out.println("- " + c.getName() + " (Contacted: " + c.getRequestCount() + " times)");
+								}
+							}
+						}
+					}else if (choice == 11) {
 						session.logout();
 						System.out.println("Logged out successfully.");
 					}

@@ -62,6 +62,16 @@ public abstract class Contact {
         }
     }
     
+    private int requestCount = 0; // Tracks frequency
+
+    public int getRequestCount() {
+        return requestCount;
+    }
+
+    public void incrementRequestCount() {
+        this.requestCount++;
+    }
+    
     public void setName(String name) {
         if (name == null || name.isBlank()) {
             throw new IllegalArgumentException("Name cannot be empty");
