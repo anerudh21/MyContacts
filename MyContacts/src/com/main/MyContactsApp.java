@@ -1,5 +1,18 @@
 package com.main;
 
+/*
+ * MyContactsApp - Integrated Module
+* FEATURES OVERVIEW:
+ *  Authentication     : Secure Login/Registration & Session Hashing
+ *  Contact Engine      : Full CRUD for Persons and Organizations
+ *  Search Engine (UC09): Multi-parameter Predicate Filtering
+ *  Analytics (UC10)    : Frequency tracking and Temporal Sorting
+ *  Tagging (UC11/12)   : Set-based unique tagging & relationship mapping
+ *  
+ *  @author Developer
+ *  @version 12.0
+ */
+
 import java.util.*;
 import java.util.function.Predicate;
 
@@ -130,12 +143,8 @@ public class MyContactsApp {
                         System.out.print("Email: ");
                         contact.addEmailAddress(new EmailAddress(sc.nextLine()));
                         
-                        System.out.print("Add a tag (Optional, leave blank for none): ");
-                        String tagVal = sc.nextLine();
-                        if(!tagVal.isBlank()) contact.addTag(new Tag(tagVal));
-
                         repo.save(contact);
-                        System.out.println("Contact added!");
+                        System.out.println("Contact added! Use 'Manage Tags' to categorize.");
 
                     } else if (choice == 5) {
                         List<Contact> contacts = repo.findAll();
@@ -155,10 +164,9 @@ public class MyContactsApp {
                         System.out.println("Tags: " + c.getTags());
 
                     } else if (choice == 6) {
-                        // FULL EDIT LOGIC
                         List<Contact> contacts = repo.findAll();
                         for (int i = 0; i < contacts.size(); i++) System.out.println((i+1) + ". " + contacts.get(i).getName());
-                        System.out.print("Select contact to edit: ");
+                        System.out.print("Select index to edit: ");
                         int idx = Integer.parseInt(sc.nextLine()) - 1;
                         Contact existing = contacts.get(idx);
                         Contact edited = (existing instanceof Person p) ? new Person(p) : new Organization((Organization)existing);
@@ -183,12 +191,11 @@ public class MyContactsApp {
                         System.out.println("Deleted.");
 
                     } else if (choice == 8) {
-                        // BULK OPS
                         List<Contact> contacts = repo.findAll();
-                        System.out.println("1. Multiple Delete 2. Delete All Persons 3. Delete All Orgs");
+                        System.out.println("1. Multi-Delete 2. Clear Persons 3. Clear Orgs");
                         int bc = Integer.parseInt(sc.nextLine());
                         if(bc == 1) {
-                            System.out.print("Indices (1,2,3): ");
+                            System.out.print("Indices (e.g. 1,2): ");
                             String[] ids = sc.nextLine().split(",");
                             List<UUID> toDel = Arrays.stream(ids).map(s -> contacts.get(Integer.parseInt(s.trim())-1).getId()).toList();
                             repo.deleteAll(toDel);
@@ -210,7 +217,9 @@ public class MyContactsApp {
                             case 4 -> ss.getTagPredicate(term);
                             default -> (Contact c) -> false;
                         };
-                        repo.filter(p).forEach(c -> System.out.println("- " + c.getName()));
+                        List<Contact> results = repo.filter(p);
+                        if (results.isEmpty()) System.out.println("No results found.");
+                        else results.forEach(c -> System.out.println("- " + c.getName() + " " + c.getTags()));
 
                     } else if (choice == 10) {
                         ContactFilterService fs = new ContactFilterService();
@@ -226,20 +235,47 @@ public class MyContactsApp {
                         res.forEach(c -> System.out.println(c.getName() + " [Visited: " + c.getRequestCount() + "]"));
 
                     } else if (choice == 11) {
-                        // MANAGE TAGS (UC-11)
+                        // --- UC-12: APPLY TAGS TO CONTACTS ---
                         List<Contact> contacts = repo.findAll();
-                        for (int i = 0; i < contacts.size(); i++) System.out.println((i+1) + ". " + contacts.get(i).getName());
-                        System.out.print("Select contact: ");
+                        if (contacts.isEmpty()) { System.out.println("Add contacts first."); continue; }
+                        
+                        for (int i = 0; i < contacts.size(); i++) 
+                            System.out.println((i+1) + ". " + contacts.get(i).getName() + " (Tags: " + contacts.get(i).getTags() + ")");
+                        
+                        System.out.print("Select contact number: ");
                         Contact c = contacts.get(Integer.parseInt(sc.nextLine()) - 1);
-                        System.out.println("1. Add Tag 2. Remove Tag");
-                        int tc = Integer.parseInt(sc.nextLine());
-                        if(tc == 1) { System.out.print("Tag Name: "); c.addTag(new Tag(sc.nextLine())); }
-                        else if(tc == 2) { System.out.print("Tag to remove: "); c.removeTag(sc.nextLine()); }
-                        System.out.println("Tags updated.");
+                        
+                        System.out.println("\n1. Add Multiple Tags (comma separated)");
+                        System.out.println("2. Remove a Tag");
+                        System.out.println("3. Clear All Tags");
+                        System.out.print("Action: ");
+                        int tagAction = Integer.parseInt(sc.nextLine());
+
+                        switch (tagAction) {
+                            case 1 -> {
+                                System.out.print("Enter tags (e.g. Work, Family, Urgent): ");
+                                String inputTags = sc.nextLine();
+                                String[] tagArray = inputTags.split(",");
+                                for (String t : tagArray) {
+                                    c.addTag(new Tag(t.trim()));
+                                }
+                                System.out.println("Tags applied successfully!");
+                            }
+                            case 2 -> {
+                                System.out.print("Tag name to remove: ");
+                                c.removeTag(sc.nextLine());
+                                System.out.println("Tag removed.");
+                            }
+                            case 3 -> {
+                                c.clearAllTags();
+                                System.out.println("Tags cleared.");
+                            }
+                            default -> System.out.println("Invalid selection.");
+                        }
 
                     } else if (choice == 12) {
                         session.logout();
-                        System.out.println("Logged out.");
+                        System.out.println("Logged out successfully.");
                     }
                 } catch (Exception e) {
                     System.out.println("Error: " + e.getMessage());

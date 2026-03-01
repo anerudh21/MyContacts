@@ -4,6 +4,10 @@ import java.time.LocalDateTime;
 import java.util.*;
 import com.user.tag.Tag;
 
+/**
+ * Abstract Contact class representing the blueprint for all contact types.
+ * Implements UC-10 (Frequency), UC-11 (Tag relationship), and UC-12 (Tag management).
+ */
 public abstract class Contact {
 
     private final UUID id;
@@ -11,8 +15,8 @@ public abstract class Contact {
     private String name;
     private final List<PhoneNumber> phoneNumbers;
     private final List<EmailAddress> emailAddresses;
-    private final Set<Tag> tags; // Updated to Set<Tag> for UC-11
-    private int requestCount = 0; // Tracks frequency for UC-10
+    private final Set<Tag> tags; 
+    private int requestCount = 0; 
 
     public Contact(String name) {
         this.id = UUID.randomUUID();
@@ -29,10 +33,33 @@ public abstract class Contact {
         this.name = other.name;
         this.phoneNumbers = new ArrayList<>(other.phoneNumbers);
         this.emailAddresses = new ArrayList<>(other.emailAddresses);
-        this.tags = new HashSet<>(other.tags); // Deep copy of Tag objects
+        this.tags = new HashSet<>(other.tags); 
         this.requestCount = other.requestCount;
     }
 
+    // --- ADDED METHODS FOR COMPATIBILITY WITH MAIN ---
+
+    /**
+     * Adds a single PhoneNumber object to the list.
+     * Used in Choice 4 (Add Contact) of the Main App.
+     */
+    public void addPhoneNumber(PhoneNumber phoneNumber) {
+        if (phoneNumber != null) {
+            this.phoneNumbers.add(phoneNumber);
+        }
+    }
+
+    /**
+     * Adds a single EmailAddress object to the list.
+     * Used in Choice 4 (Add Contact) of the Main App.
+     */
+    public void addEmailAddress(EmailAddress emailAddress) {
+        if (emailAddress != null) {
+            this.emailAddresses.add(emailAddress);
+        }
+    }
+
+    // --- GETTERS ---
     public UUID getId() { return id; }
     public String getName() { return name; }
     public LocalDateTime getCreatedAt() { return createdAt; }
@@ -50,15 +77,13 @@ public abstract class Contact {
         return new HashSet<>(tags);
     }
 
-    public void addPhoneNumber(PhoneNumber phoneNumber) {
-        phoneNumbers.add(phoneNumber);
+    // UC-10: Frequency Tracking
+    public void incrementRequestCount() {
+        this.requestCount++;
     }
 
-    public void addEmailAddress(EmailAddress emailAddress) {
-        emailAddresses.add(emailAddress);
-    }
-
-    // Updated for UC-11 Relationship
+    // UC-11 & UC-12: Tag Relationship Management
+    
     public void addTag(Tag tag) {
         if (tag != null) {
             tags.add(tag);
@@ -66,13 +91,16 @@ public abstract class Contact {
     }
     
     public void removeTag(String tagName) {
-        tags.remove(new Tag(tagName));
+        if (tagName != null) {
+            tags.remove(new Tag(tagName));
+        }
     }
 
-    public void incrementRequestCount() {
-        this.requestCount++;
+    public void clearAllTags() {
+        this.tags.clear();
     }
-    
+
+    // --- SETTERS ---
     public void setName(String name) {
         if (name == null || name.isBlank()) {
             throw new IllegalArgumentException("Name cannot be empty");
