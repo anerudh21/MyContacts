@@ -1,9 +1,8 @@
 package com.user.contact;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.UUID;
-import java.util.ArrayList;
+import java.util.*;
+import com.user.tag.Tag;
 
 public abstract class Contact {
 
@@ -12,7 +11,8 @@ public abstract class Contact {
     private String name;
     private final List<PhoneNumber> phoneNumbers;
     private final List<EmailAddress> emailAddresses;
-    private final List<String> tags; // Added for UC-09
+    private final Set<Tag> tags; // Updated to Set<Tag> for UC-11
+    private int requestCount = 0; // Tracks frequency for UC-10
 
     public Contact(String name) {
         this.id = UUID.randomUUID();
@@ -20,7 +20,7 @@ public abstract class Contact {
         this.name = name;
         this.phoneNumbers = new ArrayList<>();
         this.emailAddresses = new ArrayList<>();
-        this.tags = new ArrayList<>();
+        this.tags = new HashSet<>();
     }
     
     protected Contact(Contact other) {
@@ -29,12 +29,14 @@ public abstract class Contact {
         this.name = other.name;
         this.phoneNumbers = new ArrayList<>(other.phoneNumbers);
         this.emailAddresses = new ArrayList<>(other.emailAddresses);
-        this.tags = new ArrayList<>(other.tags); // Deep copy tags
+        this.tags = new HashSet<>(other.tags); // Deep copy of Tag objects
+        this.requestCount = other.requestCount;
     }
 
     public UUID getId() { return id; }
     public String getName() { return name; }
     public LocalDateTime getCreatedAt() { return createdAt; }
+    public int getRequestCount() { return requestCount; }
 
     public List<PhoneNumber> getPhoneNumbers() {
         return new ArrayList<>(phoneNumbers);
@@ -44,8 +46,8 @@ public abstract class Contact {
         return new ArrayList<>(emailAddresses);
     }
 
-    public List<String> getTags() {
-        return new ArrayList<>(tags);
+    public Set<Tag> getTags() {
+        return new HashSet<>(tags);
     }
 
     public void addPhoneNumber(PhoneNumber phoneNumber) {
@@ -56,16 +58,15 @@ public abstract class Contact {
         emailAddresses.add(emailAddress);
     }
 
-    public void addTag(String tag) {
-        if (tag != null && !tag.isBlank()) {
-            tags.add(tag.toLowerCase().trim());
+    // Updated for UC-11 Relationship
+    public void addTag(Tag tag) {
+        if (tag != null) {
+            tags.add(tag);
         }
     }
     
-    private int requestCount = 0; // Tracks frequency
-
-    public int getRequestCount() {
-        return requestCount;
+    public void removeTag(String tagName) {
+        tags.remove(new Tag(tagName));
     }
 
     public void incrementRequestCount() {
@@ -102,6 +103,7 @@ public abstract class Contact {
                 Phone Numbers: %s
                 Email Addresses: %s
                 Tags: %s
+                Frequency: %d
                 Created At: %s
                 ==============================
                 """.formatted(
@@ -110,6 +112,7 @@ public abstract class Contact {
                 phoneNumbers,
                 emailAddresses,
                 tags,
+                requestCount,
                 createdAt
         );
     }
